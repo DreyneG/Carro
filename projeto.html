@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Gerenciador de Carros</title>
+        <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            background-color: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+        }
+        li:hover {
+            background-color: #eaeaea;
+        }
+        button.edit {
+            background-color: #ffc107;
+            margin-right: 5px;
+        }
+        button.delete {
+            background-color: #dc3545;
+        }
+    </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Gerenciador de Carros</h1>
+
+            <!-- Formulário para adicionar um novo carro -->
+            <h2>Adicionar Novo Carro</h2>
+            <form id="addCarForm">
+                <label for="chassi">Chassi:</label>
+                <input type="text" id="chassi" name="chassi" required><br>
+                <label for="marca">Marca:</label>
+                <input type="text" id="marca" name="marca" required><br>
+                <label for="modelo">Modelo:</label>
+                <input type="text" id="modelo" name="modelo" required><br>
+                <label for="ano">Ano:</label>
+                <input type="text" id="ano" name="ano" required><br>
+                <label for="combustivel">Combustível:</label>
+                <input type="text" id="combustivel" name="combustivel"
+                    required><br>
+                <label for="cor">Cor:</label>
+                <input type="text" id="cor" name="cor" required><br>
+                <label for="motor">Motor:</label>
+                <input type="text" id="motor" name="motor" required><br>
+                <label for="cambio">Câmbio:</label>
+                <input type="text" id="cambio" name="cambio" required><br>
+                <button type="submit">Adicionar Carro</button>
+            </form>
+
+            <!-- Lista de carros -->
+            <h2>Lista de Carros</h2>
+            <ul id="carList"></ul>
+        </div>
+
+        <script>
+        // Função para carregar a lista de carros
+        function loadCars() {
+            fetch('http://localhost:5028/api/Carro')
+                .then(response => response.json())
+                .then(data => {
+                    const existingChassis = data.map(car => car.chassi);
+                    const carList = document.getElementById('carList');
+                    carList.innerHTML = '';
+                    data.forEach(car => {
+                        const listItem = document.createElement('li');
+                        listItem.innerHTML = `
+                            <strong>Chassi:</strong> ${car.chassi}<br>
+                            <strong>Marca:</strong> ${car.marca}<br>
+                            <strong>Modelo:</strong> ${car.modelo}<br>
+                            <strong>Ano:</strong> ${car.ano}<br>
+                            <strong>Combustível:</strong> ${car.combustivel}<br>
+                            <strong>Cor:</strong> ${car.cor}<br>
+                            <strong>Motor:</strong> ${car.motor}<br>
+                            <strong>Câmbio:</strong> ${car.cambio}<br>
+                            <button class="edit" onclick="editCar('${car.chassi}', '${car.marca}', '${car.modelo}', '${car.ano}', '${car.combustivel}', '${car.cor}', '${car.motor}', '${car.cambio}')">Editar</button>
+                            <button class="delete" onclick="deleteCar('${car.chassi}')">Deletar</button>
+                        `;
+                        carList.appendChild(listItem);
+                    });
+                })
+                .catch(error => console.error('Erro ao carregar a lista de carros:', error));
+        }
+        
+        // Event listener para o envio do formulário de adição de carro
+        document.getElementById('addCarForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            const chassi = formData.get('chassi');
+            const newCar = {
+                chassi: formData.get('chassi'),
+                marca: formData.get('marca'),
+                modelo: formData.get('modelo'),
+                ano: formData.get('ano'),
+                combustivel: formData.get('combustivel'),
+                cor: formData.get('cor'),
+                motor: formData.get('motor'),
+                cambio: formData.get('cambio')
+            };
+            let url;
+            let method;
+          
+            // const chassi = formData.get('chassi'); // Obtenha o chassi do formulário
+            fetch(`http://localhost:5028/api/Carro/${chassi}`)
+                .then(response => {
+                     if (response.ok) {
+                // Se o chassi existir, é uma edição
+                          return 'PUT';
+                     } else {
+                // Se o chassi não existir, é uma adição
+                        return 'POST';
+                     }
+             })
+
+                
+            // }
+
+            .then(method => {
+                let url;
+                if (method === 'PUT') {
+                     url = `http://localhost:5028/api/Carro/${chassi}`;
+                } else {
+                    url = `http://localhost:5028/api/Carro/`;
+                }
+
+            // Enviar a requisição com o método determinado
+                return fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newCar)
+                 });
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erro ao adicionar/editar o carro.');
+                }
+                return response.text();
+            })
+            .then(() => {
+                loadCars();
+                this.reset();
+            })
+            .catch(error => console.error('Erro ao adicionar/editar o carro:', error));
+        });
+
+        // Função para preencher o formulário com os dados do carro selecionado para edição
+        function editCar(chassi, marca, modelo, ano, combustivel, cor, motor, cambio) {
+            document.getElementById('chassi').value = chassi;
+            document.getElementById('marca').value = marca;
+            document.getElementById('modelo').value = modelo;
+            document.getElementById('ano').value = ano;
+            document.getElementById('combustivel').value = combustivel;
+            document.getElementById('cor').value = cor;
+            document.getElementById('motor').value = motor;
+            document.getElementById('cambio').value = cambio;
+        }
+        
+        // Função para deletar um carro
+        function deleteCar(chassi) {
+            if (confirm("Tem certeza que deseja deletar este carro?")) {
+                fetch(`http://localhost:5028/api/Carro/${chassi}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erro ao deletar o carro.');
+                    }
+                    return response.text(); // Alterado de response.json() para response.text()
+                })
+                .then(() => {
+                    loadCars();
+                })
+                .catch(error => console.error('Erro ao deletar o carro:', error));
+            }
+        }
+        
+        // Carregar a lista de carros ao carregar a página
+        loadCars();
+    </script>
+    </body>
+</html>
